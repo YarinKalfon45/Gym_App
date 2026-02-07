@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FBW Pro Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            background-color: #121212; 
+            color: #ffffff; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding-bottom: 50px;
+        }
+        /* כרטיסיות אימון */
+        .drill-card {
+            background-color: #1E1E1E;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        /* שדות קלט - לבן על שחור לקריאות מקסימלית */
+        input {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            width: 100%;
+            text-align: center;
+            appearance: none; /* ביטול עיצוב ברירת מחדל של אייפון */
+        }
+        input:focus {
+            border-color: #2563EB;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+        }
+        input::placeholder {
+            color: #9CA3AF;
+            font-weight: normal;
+        }
+        /* כפתורים */
+        .btn-tab {
+            background-color: #2D2D2D;
+            color: #888;
+            border: 1px solid #444;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn-tab.active {
+            background-color: #2563EB; /* כחול רויאל */
+            color: white;
+            border-color: #2563EB;
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+        }
+        .btn-save {
+            background: linear-gradient(135deg, #2563EB, #1D4ED8);
+            color: white;
+            font-size: 20px;
+            font-weight: 900;
+            padding: 16px;
+            border-radius: 12px;
+            width: 100%;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
+        }
+        .btn-save:active { transform: scale(0.98); }
+        
+        /* טקסטים קטנים */
+        .last-data { color: #FACC15; font-size: 0.85rem; font-weight: bold; margin-top: 4px; }
+        .rest-badge { background-color: #374151; color: #D1D5DB; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+    </style>
+</head>
+<body class="p-4 max-w-md mx-auto">
+
+    <header class="text-center mb-6">
+        <h1 class="text-3xl font-black text-blue-500 tracking-tight">GYM LOG PRO</h1>
+        <p class="text-gray-500 text-sm">מעקב אימונים חכם</p>
+    </header>
+
+    <div class="grid grid-cols-3 gap-3 mb-6">
+        <button onclick="switchTab(1)" id="tab1" class="btn-tab active">יום 1</button>
+        <button onclick="switchTab(2)" id="tab2" class="btn-tab">יום 2</button>
+        <button onclick="switchTab(3)" id="tab3" class="btn-tab">יום 3</button>
+    </div>
+
+    <div id="workout-container">
+        </div>
+
+    <button onclick="saveWorkout()" class="btn-save">✅ שמור אימון</button>
+
+    <div class="mt-10">
+        <h3 class="text-gray-500 font-bold mb-4 border-b border-gray-800 pb-2">היסטוריה אחרונה</h3>
+        <div id="history-list" class="space-y-3"></div>
+        <button onclick="clearHistory()" class="text-red-500 text-xs mt-4 w-full text-center">מחק היסטוריה</button>
+    </div>
+
+    <script>
+        // --- הנתונים ---
+        const PROGRAMS = {
+            1: [
+                {n: "לחיצת כתפיים (OHP)", r: "2-3 דק'"},
+                {n: "לחיצת רגליים (Leg Press)", r: "90 שנ'"},
+                {n: "לחיצת חזה בשיפוע (משקולות)", r: "90 שנ'"},
+                {n: "חתירה בתמיכת חזה", r: "90 שנ'"},
+                {n: "פייס-פולס (Face Pulls)", r: "60 שנ'"},
+                {n: "כפיפת מרפקים (מוט EZ)", r: "60 שנ'"},
+                {n: "פשיטת טריצפס מעל הראש", r: "60 שנ'"}
+            ],
+            2: [
+                {n: "לחיצת חזה (סמית' שטוח)", r: "2-3 דק'"},
+                {n: "דדליפט רומני (RDL)", r: "90 שנ'"},
+                {n: "מתח / פולי עליון", r: "90 שנ'"},
+                {n: "הרחקת כתפיים לצדדים", r: "90 שנ'"},
+                {n: "כפיפת מרפקים (פטישים)", r: "60 שנ'"},
+                {n: "פשיטת מרפקים בכבלים", r: "60 שנ'"},
+                {n: "הרמות רגליים בתליה", r: "60 שנ'"}
+            ],
+            3: [
+                {n: "פוש פרס (Push Press)", r: "2-3 דק'"},
+                {n: "פשיטת רגליים + כפיפה", r: "90 שנ'"},
+                {n: "לחיצת חזה (מכונה)", r: "90 שנ'"},
+                {n: "פולי עליון (אחיזה רחבה)", r: "90 שנ'"},
+                {n: "פרפר אחורי (מכונה)", r: "60 שנ'"},
+                {n: "כפיפת מרפקים (פריצ'ר)", r: "60 שנ'"},
+                {n: "פשיטת מרפקים (Skull Crushers)", r: "60 שנ'"}
+            ]
+        };
+
+        let currentDay = 1;
+
+        // --- לוגיקה ---
+        function getHistory() {
+            return JSON.parse(localStorage.getItem('gym_history') || '[]');
+        }
+
+        function getLastWeight(drillName) {
+            const history = getHistory();
+            for (let workout of history) {
+                const drill = workout.drills.find(d => d.name === drillName);
+                if (drill && drill.weight && drill.weight !== "0") return drill.weight;
+            }
+            return "-";
+        }
+
+        function switchTab(day) {
+            currentDay = day;
+            // עדכון כפתורים
+            document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab${day}`).classList.add('active');
+            
+            // רינדור תרגילים
+            const container = document.getElementById('workout-container');
+            container.innerHTML = '';
+            
+            PROGRAMS[day].forEach((drill, index) => {
+                const last = getLastWeight(drill.n);
+                const html = `
+                <div class="drill-card">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-lg text-white">${drill.n}</span>
+                        <span class="rest-badge">⏱️ ${drill.r}</span>
+                    </div>
+                    <div class="last-data mb-3">פעם שעברה: ${last !== '-' ? last + ' ק"ג' : 'טרם בוצע'}</div>
+                    
+                    <div class="flex gap-3">
+                        <div class="w-1/2">
+                            <label class="text-xs text-gray-400 mb-1 block">משקל (ק"ג)</label>
+                            <input type="number" inputmode="decimal" class="drill-weight" placeholder="${last !== '-' ? last : '0'}" data-name="${drill.n}">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="text-xs text-gray-400 mb-1 block">חזרות</label>
+                            <input type="number" inputmode="numeric" class="drill-reps" placeholder="10">
+                        </div>
+                    </div>
+                </div>`;
+                container.innerHTML += html;
+            });
+        }
+
+        function saveWorkout() {
+            const weights = document.querySelectorAll('.drill-weight');
+            const reps = document.querySelectorAll('.drill-reps');
+            let workoutData = [];
+            let summaryText = `💪 אימון יום ${currentDay} (${new Date().toLocaleDateString('he-IL')})\n`;
+            let hasData = false;
+
+            weights.forEach((input, i) => {
+                const w = input.value;
+                const r = reps[i].value;
+                const name = input.dataset.name;
+                
+                if(w || r) {
+                    hasData = true;
+                    workoutData.push({ name: name, weight: w || "0", reps: r || "-" });
+                    if(w) summaryText += `• ${name}: ${w} ק"ג (${r})\n`;
+                }
+            });
+
+            if(!hasData) return alert("לא הזנת נתונים!");
+
+            // שמירה לזיכרון
+            const history = getHistory();
+            history.unshift({ date: new Date().toLocaleDateString('he-IL'), day: currentDay, drills: workoutData });
+            localStorage.setItem('gym_history', JSON.stringify(history.slice(0, 50)));
+
+            // העתקה והודעה
+            navigator.clipboard.writeText(summaryText).then(() => alert("האימון נשמר והועתק ללוח!"));
+            renderHistory();
+            
+            // איפוס שדות (אופציונלי)
+            // switchTab(currentDay); 
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            const history = getHistory();
+            if(history.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-600 text-sm">אין היסטוריה עדיין</div>';
+                return;
+            }
+            
+            list.innerHTML = history.map(h => `
+                <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 opacity-80">
+                    <div class="text-sm font-bold text-blue-400 mb-1">${h.date} - יום ${h.day}</div>
+                    <div class="text-xs text-gray-400 grid grid-cols-2 gap-1">
+                        ${h.drills.map(d => `<div>${d.name}: <span class="text-white font-bold">${d.weight}</span></div>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            if(confirm('למחוק את כל ההיסטוריה?')) {
+                localStorage.removeItem('gym_history');
+                renderHistory();
+                switchTab(currentDay); // ריענון כדי למחוק את "פעם שעברה" מהשדות
+            }
+        }
+
+        // אתחול ראשוני
+        switchTab(1);
+        renderHistory();
+    </script>
+</body>
+</html>
