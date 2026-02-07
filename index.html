@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FBW Hypertrophy</title>
+    <title>FBW Chest Focus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { 
             background-color: #000000; 
             color: #ffffff; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            padding-bottom: 80px; /* Space for bottom button */
+            padding-bottom: 80px; 
         }
         
-        /* High Contrast Card */
         .drill-card {
             background-color: #121212;
             border: 1px solid #333;
@@ -22,7 +21,7 @@
             margin-bottom: 16px;
         }
 
-        /* Inputs: White background, Black text (Maximum Readability) */
+        /* שדות קלט לבנים וברורים */
         input {
             background-color: #ffffff !important;
             color: #000000 !important;
@@ -41,7 +40,7 @@
             box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.4);
         }
 
-        /* Tabs */
+        /* טאבים */
         .btn-tab {
             background-color: #1F2937;
             color: #9CA3AF;
@@ -58,7 +57,7 @@
             border-color: #3B82F6;
         }
 
-        /* Save Button */
+        /* כפתור שמירה צף */
         .fixed-bottom-btn {
             position: fixed;
             bottom: 20px;
@@ -76,10 +75,12 @@
         }
         .fixed-bottom-btn:active { transform: scale(0.96); }
 
-        /* Badges */
         .set-badge { background-color: #2563EB; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
         .rest-badge { background-color: #374151; color: #D1D5DB; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
         .last-data { color: #FACC15; font-size: 0.9rem; font-weight: bold; margin-top: 6px; display: block;}
+        
+        /* הדגשה לתרגילי חזה */
+        .chest-highlight { border-right: 4px solid #FACC15; }
     </style>
 </head>
 <body class="p-4 max-w-md mx-auto">
@@ -87,15 +88,15 @@
     <header class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
         <div>
             <h1 class="text-2xl font-black text-blue-500 tracking-tight">MY GYM LOG</h1>
-            <p class="text-gray-500 text-xs font-bold">HYPERTROPHY EDITION</p>
+            <p class="text-gray-500 text-xs font-bold">CHEST SPECIALIZATION</p>
         </div>
         <button onclick="exportData()" class="text-gray-600 text-xs border border-gray-700 p-2 rounded"> גיבוי 📥</button>
     </header>
 
     <div class="grid grid-cols-3 gap-3 mb-6">
-        <button onclick="switchTab(1)" id="tab1" class="btn-tab active">יום 1<br><span class="text-[10px] font-normal">אנכי + רגליים</span></button>
-        <button onclick="switchTab(2)" id="tab2" class="btn-tab">יום 2<br><span class="text-[10px] font-normal">אופקי + גובלט</span></button>
-        <button onclick="switchTab(3)" id="tab3" class="btn-tab">יום 3<br><span class="text-[10px] font-normal">פאמפ + ידיים</span></button>
+        <button onclick="switchTab(1)" id="tab1" class="btn-tab active">יום 1<br><span class="text-[10px] font-normal">חזה עליון + כתפיים</span></button>
+        <button onclick="switchTab(2)" id="tab2" class="btn-tab">יום 2<br><span class="text-[10px] font-normal">חזה שטוח + רגליים</span></button>
+        <button onclick="switchTab(3)" id="tab3" class="btn-tab">יום 3<br><span class="text-[10px] font-normal">פאמפ חזה + ידיים</span></button>
     </div>
 
     <div id="workout-container" class="pb-20"></div>
@@ -111,31 +112,31 @@
     </div>
 
     <script>
-        // --- Updated Program Data (Hypertrophy Volume) ---
+        // --- Updated Program: 2 Chest Drills Per Day ---
         const PROGRAMS = {
             1: [
-                {n: "לחיצת כתפיים מוט (OHP)", s: "5 סטים", r: "8-10", rest: "2-3 דק'"},
-                {n: "לחיצת רגליים (Leg Press)", s: "4 סטים", r: "10-12", rest: "90 שנ'"},
-                {n: "לחיצת חזה שיפוע (משקולות)", s: "4 סטים", r: "10-12", rest: "90 שנ'"},
+                {n: "לחיצת כתפיים מוט (OHP)", s: "4 סטים", r: "8-10", rest: "2-3 דק'"},
+                {n: "לחיצת רגליים (Leg Press)", s: "3 סטים", r: "10-12", rest: "90 שנ'"},
+                {n: "לחיצת חזה שיפוע (משקולות)", s: "4 סטים", r: "8-10", rest: "90 שנ'", tag: "chest"},
+                {n: "פרפר חזה (כבלים/משקולות)", s: "3 סטים", r: "12-15", rest: "60 שנ'", tag: "chest"},
                 {n: "חתירה בתמיכת חזה", s: "4 סטים", r: "10-12", rest: "90 שנ'"},
-                {n: "פייס-פולס (Face Pulls)", s: "3 סטים", r: "15", rest: "60 שנ'"},
                 {n: "כפיפת מרפקים (מוט EZ)", s: "3 סטים", r: "10-12", rest: "60 שנ'"},
                 {n: "פשיטת טריצפס מעל הראש", s: "3 סטים", r: "10-12", rest: "60 שנ'"}
             ],
             2: [
-                {n: "לחיצת חזה (סמית' שטוח)", s: "4 סטים", r: "8-10", rest: "2-3 דק'"},
+                {n: "לחיצת חזה (סמית' שטוח)", s: "4 סטים", r: "8-10", rest: "2-3 דק'", tag: "chest"},
+                {n: "פרפר בשיפוע חיובי (משקולות)", s: "3 סטים", r: "12-15", rest: "60 שנ'", tag: "chest"},
                 {n: "דדליפט רומני (RDL)", s: "4 סטים", r: "8-10", rest: "90 שנ'"},
                 {n: "גובלט סקוואט / לאנג'ים", s: "3 סטים", r: "12", rest: "90 שנ'"},
                 {n: "מתח / פולי עליון", s: "4 סטים", r: "8-10", rest: "90 שנ'"},
                 {n: "הרחקת כתפיים לצדדים", s: "3 סטים", r: "15", rest: "60 שנ'"},
-                {n: "כפיפת מרפקים (פטישים)", s: "3 סטים", r: "10-12", rest: "60 שנ'"},
-                {n: "פשיטת מרפקים (כבלים)", s: "3 סטים", r: "10-12", rest: "60 שנ'"}
+                {n: "ידיים (בייספס+טריספס)", s: "3 סטים", r: "12", rest: "60 שנ'"}
             ],
             3: [
-                {n: "פוש פרס (Push Press)", s: "5 סטים", r: "5-8", rest: "2-3 דק'"},
-                {n: "פשיטת רגליים (Leg Ext)", s: "4 סטים", r: "12-15", rest: "90 שנ'"},
-                {n: "כפיפת רגליים (Leg Curl)", s: "4 סטים", r: "12-15", rest: "90 שנ'"},
-                {n: "לחיצת חזה (מכונה)", s: "4 סטים", r: "12", rest: "90 שנ'"},
+                {n: "לחיצת חזה (מכונה)", s: "3 סטים", r: "10-12", rest: "90 שנ'", tag: "chest"},
+                {n: "שכיבות סמיכה / מקבילים", s: "3 סטים", r: "MAX", rest: "60 שנ'", tag: "chest"},
+                {n: "פוש פרס (Push Press)", s: "4 סטים", r: "6-8", rest: "2-3 דק'"},
+                {n: "פשיטת רגליים + כפיפה", s: "3 סטים", r: "12-15", rest: "90 שנ'"},
                 {n: "פולי עליון (אחיזה רחבה)", s: "4 סטים", r: "10-12", rest: "90 שנ'"},
                 {n: "פרפר אחורי (Rear Delt)", s: "3 סטים", r: "15-20", rest: "60 שנ'"},
                 {n: "ידיים (סופר-סט)", s: "3 סטים", r: "12", rest: "60 שנ'"}
@@ -145,7 +146,7 @@
         let currentDay = 1;
 
         function getHistory() {
-            return JSON.parse(localStorage.getItem('gym_history_v2') || '[]');
+            return JSON.parse(localStorage.getItem('gym_history_v3') || '[]');
         }
 
         function getLastWeight(drillName) {
@@ -167,8 +168,10 @@
             
             PROGRAMS[day].forEach((drill) => {
                 const last = getLastWeight(drill.n);
+                const isChest = drill.tag === 'chest' ? 'chest-highlight' : '';
+                
                 const html = `
-                <div class="drill-card">
+                <div class="drill-card ${isChest}">
                     <div class="flex justify-between items-start mb-3">
                         <div>
                             <span class="font-black text-lg text-white block">${drill.n}</span>
@@ -221,7 +224,7 @@
 
             const history = getHistory();
             history.unshift({ date: new Date().toLocaleDateString('he-IL'), day: currentDay, drills: workoutData });
-            localStorage.setItem('gym_history_v2', JSON.stringify(history.slice(0, 50)));
+            localStorage.setItem('gym_history_v3', JSON.stringify(history.slice(0, 50)));
 
             navigator.clipboard.writeText(summaryText).then(() => alert("האימון נשמר והועתק ללוח!"));
             renderHistory();
@@ -246,7 +249,7 @@
         }
 
         function exportData() {
-            const data = localStorage.getItem('gym_history_v2');
+            const data = localStorage.getItem('gym_history_v3');
             if (!data) return alert("אין נתונים");
             const blob = new Blob([data], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
@@ -260,7 +263,7 @@
 
         function clearHistory() {
             if(confirm('למחוק את כל ההיסטוריה? פעולה זו אינה הפיכה.')) {
-                localStorage.removeItem('gym_history_v2');
+                localStorage.removeItem('gym_history_v3');
                 renderHistory();
                 switchTab(currentDay);
             }
