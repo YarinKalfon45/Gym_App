@@ -3,47 +3,124 @@ import json
 import os
 from datetime import datetime
 
-# --- הגדרות עמוד ועיצוב ---
-st.set_page_config(page_title="My FBW Tracker", page_icon="💪", layout="centered")
+# --- הגדרות עמוד ---
+st.set_page_config(page_title="Gym Tracker Pro", page_icon="💪", layout="centered")
 
-# CSS מותאם אישית לעיצוב מודרני ותמיכה ב-RTL
+# --- CSS אגרסיבי לתיקון העיצוב ---
 st.markdown("""
     <style>
-    /* כיווניות לימין */
-    .stApp { direction: rtl; }
-    
-    /* עיצוב כותרות */
-    h1, h2, h3 { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #60A5FA; text-align: center; }
-    
-    /* כרטיסיות לתרגילים */
-    div[data-testid="stVerticalBlock"] > div {
-        background-color: #1E293B;
-        border-radius: 10px;
-        padding: 10px;
-        margin-bottom: 10px;
+    /* איפוס כללי ותמיכה בעברית */
+    .stApp {
+        background-color: #000000; /* שחור מוחלט */
+        color: #ffffff;
+        direction: rtl;
     }
     
-    /* כפתור ראשי */
-    .stButton button {
-        width: 100%;
-        background-color: #4F46E5;
-        color: white;
+    /* העלמת אלמנטים מיותרים של סטרימליט */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    /* כותרות */
+    h1 {
+        color: #4ADE80 !important; /* ירוק ניאון */
+        text-align: center;
+        font-weight: 900;
+        letter-spacing: -1px;
+        padding-bottom: 20px;
+    }
+
+    /* עיצוב הטאבים (בחירת ימים) */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 60px;
+        background-color: #1F2937;
+        border-radius: 10px;
+        color: #ffffff;
         font-weight: bold;
+        flex: 1; /* פורס את הטאבים לרוחב מלא */
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #4ADE80 !important;
+        color: #000000 !important;
+    }
+
+    /* כרטיסיות של התרגילים */
+    div[data-testid="stVerticalBlock"] > div > div[data-testid="stVerticalBlock"] {
+        background-color: #111827; /* אפור כהה מאוד */
+        border: 1px solid #374151;
         border-radius: 12px;
         padding: 15px;
-        border: none;
-        transition: 0.3s;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
     }
-    .stButton button:hover { background-color: #4338CA; }
+
+    /* טקסטים בתוך הכרטיסיות */
+    p, label {
+        color: #E5E7EB !important;
+        font-size: 16px !important;
+    }
     
-    /* שדות קלט */
-    input { text-align: center; }
+    /* עיצוב שדות הקלט (Input Fields) - שיהיו ברורים! */
+    input[type="text"] {
+        background-color: #374151 !important;
+        color: #ffffff !important;
+        border: 2px solid #4B5563 !important;
+        border-radius: 8px !important;
+        text-align: center !important;
+        font-size: 18px !important;
+        height: 50px;
+    }
+    input[type="text"]:focus {
+        border-color: #4ADE80 !important; /* גבול ירוק כשלוחצים */
+        outline: none;
+    }
+
+    /* כפתור שמירה ראשי */
+    .stButton button {
+        width: 100%;
+        background: linear-gradient(90deg, #4ADE80 0%, #22C55E 100%);
+        color: black !important;
+        font-weight: 900;
+        font-size: 20px;
+        padding: 15px;
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 0 15px rgba(74, 222, 128, 0.4);
+        margin-top: 20px;
+    }
+    .stButton button:active {
+        transform: scale(0.98);
+    }
+
+    /* טקסט של "פעם אחרונה" */
+    .last-weight {
+        color: #FACC15; /* צהוב */
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: block;
+    }
+    
+    /* שם התרגיל */
+    .drill-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 2px;
+    }
+    .rest-time {
+        font-size: 12px;
+        color: #9CA3AF;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # --- נתונים ולוגיקה ---
 PROGRAMS = {
-    "יום 1: דגש לחיצה אנכית": [
+    "יום 1": [ # Vertical Focus
         {"name": "לחיצת כתפיים (OHP)", "rest": "2-3 דק'"},
         {"name": "לחיצת רגליים (Leg Press)", "rest": "90 שנ'"},
         {"name": "לחיצת חזה בשיפוע (משקולות)", "rest": "90 שנ'"},
@@ -52,7 +129,7 @@ PROGRAMS = {
         {"name": "כפיפת מרפקים (מוט EZ)", "rest": "60 שנ'"},
         {"name": "פשיטת טריצפס מעל הראש", "rest": "60 שנ'"},
     ],
-    "יום 2: דגש לחיצה אופקית": [
+    "יום 2": [ # Horizontal Focus
         {"name": "לחיצת חזה (סמית' שטוח)", "rest": "2-3 דק'"},
         {"name": "דדליפט רומני (RDL)", "rest": "90 שנ'"},
         {"name": "מתח / פולי עליון", "rest": "90 שנ'"},
@@ -61,12 +138,12 @@ PROGRAMS = {
         {"name": "פשיטת מרפקים בכבלים", "rest": "60 שנ'"},
         {"name": "הרמות רגליים בתליה", "rest": "60 שנ'"},
     ],
-    "יום 3: דגש גב אחורי ופאמפ": [
+    "יום 3": [ # Posterior Focus
         {"name": "פוש פרס (Push Press)", "rest": "2-3 דק'"},
         {"name": "פשיטת רגליים + כפיפה", "rest": "90 שנ'"},
         {"name": "לחיצת חזה (מכונה)", "rest": "90 שנ'"},
         {"name": "פולי עליון (אחיזה רחבה)", "rest": "90 שנ'"},
-        {"name": "פרפר אחורי (מכונה/משקולות)", "rest": "60 שנ'"},
+        {"name": "פרפר אחורי (מכונה)", "rest": "60 שנ'"},
         {"name": "כפיפת מרפקים (פריצ'ר)", "rest": "60 שנ'"},
         {"name": "פשיטת מרפקים (Skull Crushers)", "rest": "60 שנ'"},
     ]
@@ -79,8 +156,7 @@ def load_history():
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except:
-            return []
+        except: return []
     return []
 
 def save_to_history(workout_data):
@@ -95,21 +171,18 @@ def get_last_data(drill_name):
         for drill in workout["drills"]:
             if drill["name"] == drill_name and drill["weight"]:
                 return f"{drill['weight']} ק\"ג"
-    return "חדש"
+    return "טרם בוצע"
 
 # --- הממשק ---
-st.title("🔥 FBW Tracker")
+st.title("GYM LOG 🔥")
 
-# טאבים לבחירת יום (יותר נוח בנייד מסלקטבוקס)
+# טאבים גדולים
 tabs = st.tabs(["יום 1", "יום 2", "יום 3"])
 days = list(PROGRAMS.keys())
 
-# בחירת היום הנוכחי לפי הטאב הפעיל
-selected_day = None
 for i, tab in enumerate(tabs):
     with tab:
         selected_day = days[i]
-        st.caption(f"**{selected_day}**")
         
         # טופס אימון
         with st.form(key=f"form_{i}"):
@@ -118,46 +191,55 @@ for i, tab in enumerate(tabs):
             
             for drill in current_drills:
                 last_val = get_last_data(drill['name'])
-                st.markdown(f"**{drill['name']}** <span style='color:gray; font-size:0.8em'>({drill['rest']})</span>", unsafe_allow_html=True)
+                
+                # כרטיסייה לכל תרגיל (Custom HTML בשביל עיצוב מדוייק)
+                st.markdown(f"""
+                <div style="margin-bottom: 5px;">
+                    <div class="drill-title">{drill['name']}</div>
+                    <div class="rest-time">⏱️ מנוחה: {drill['rest']}</div>
+                    <div class="last-weight">פעם שעברה: {last_val}</div>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 c1, c2 = st.columns(2)
                 with c1:
-                    w = st.text_input("משקל", key=f"w_{drill['name']}_{i}", placeholder=last_val)
+                    w = st.text_input("משקל", key=f"w_{drill['name']}_{i}", placeholder="ק\"ג", label_visibility="collapsed")
                 with c2:
-                    r = st.text_input("חזרות", key=f"r_{drill['name']}_{i}", placeholder="10")
+                    r = st.text_input("חזרות", key=f"r_{drill['name']}_{i}", placeholder="חזרות", label_visibility="collapsed")
                 
                 results.append({"name": drill['name'], "weight": w, "reps": r})
-                st.divider()
+                st.markdown("---") # קו מפריד עדין
             
             # כפתור שמירה
-            submit = st.form_submit_button("✅ סיים אימון ושמור")
+            submit = st.form_submit_button("✅ שמור אימון")
             
             if submit:
                 date_str = datetime.now().strftime("%d/%m/%Y")
                 save_to_history({"name": selected_day, "date": date_str, "drills": results})
                 
-                # יצירת סיכום להעתקה
+                # יצירת סיכום נקי להעתקה
                 summary_txt = f"💪 אימון {selected_day} ({date_str})\n"
                 for res in results:
                     val = res['weight'] if res['weight'] else "0"
                     reps = res['reps'] if res['reps'] else "-"
-                    summary_txt += f"• {res['name']}: {val} | {reps}\n"
+                    if val != "0": # רק אם מילאת משקל זה יופיע בסיכום
+                        summary_txt += f"• {res['name']}: {val} ק\"ג ({reps})\n"
                 
-                st.success("נשמר!")
+                st.success("נשמר בהצלחה!")
                 st.code(summary_txt, language="text")
 
-# --- היסטוריה ---
-st.markdown("---")
-with st.expander("📜 היסטוריית אימונים מלאה"):
+# --- כפתור היסטוריה מחוץ לטאבים ---
+st.markdown("<br><br>", unsafe_allow_html=True)
+with st.expander("📜 היסטוריה מלאה (לחץ לפתיחה)"):
     history = load_history()
     if not history:
-        st.info("אין עדיין אימונים שמורים.")
+        st.info("אין נתונים עדיין")
     else:
         for item in history:
-            st.markdown(f"**{item['date']} - {item['name']}**")
+            st.markdown(f"<div style='color:#4ADE80; font-weight:bold; direction:rtl;'>{item['date']} - {item['name']}</div>", unsafe_allow_html=True)
             txt = ""
             for d in item['drills']:
-                w = d['weight'] if d['weight'] else "-"
-                txt += f"{d['name']}: {w} | "
+                if d['weight'] and d['weight'] != "0":
+                    txt += f"{d['name']}: {d['weight']} | "
             st.caption(txt)
             st.divider()
